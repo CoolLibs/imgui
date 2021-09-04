@@ -3,9 +3,11 @@
 
 // Implemented features:
 //  [X] Renderer: Support for large meshes (64k+ vertices) with 16-bit indices.
-// Missing features:
-//  [ ] Platform: Multi-viewport / platform windows.
-// In this binding, ImTextureID is used to store a 'VkDescriptorSet' texture identifier. Read the FAQ about ImTextureID in imgui.cpp.
+//  [x] Platform: Multi-viewport / platform windows. With issues (flickering when creating a new viewport).
+//  [x] Renderer: User texture binding.
+//        In this binding, ImTextureID is used to store a 'VkDescriptorSet' texture identifier.
+//        Those changes are thanks to https://github.com/martty/imgui/commit/f1f948bea715754ad5e83d4dd9f928aecb4ed1d3
+//        Read the FAQ about ImTextureID in imgui.cpp.
 
 // You can use unmodified imgui_impl_* files in your project. See examples/ folder for examples of using this.
 // Prefer including the entire imgui/ repository into your project (either as a copy or as a submodule), and only build the backends you need.
