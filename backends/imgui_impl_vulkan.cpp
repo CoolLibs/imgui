@@ -26,7 +26,7 @@
 
 // CHANGELOG
 // (minor and older changes stripped away, please see git history for details)
-//  2021-XX-XX: Platform: Added support for multiple windows via the ImGuiPlatformIO interface.
+//  2022-XX-XX: Platform: Added support for multiple windows via the ImGuiPlatformIO interface.
 //  2021-10-15: Vulkan: Call vkCmdSetScissor() at the end of render a full-viewport to reduce likehood of issues with people using VK_DYNAMIC_STATE_SCISSOR in their app without calling vkCmdSetScissor() explicitly every frame.
 //  2021-06-29: Reorganized backend to pull data from a single structure to facilitate usage with multiple-contexts (all g_XXXX access changed to bd->XXXX).
 //  2021-03-22: Vulkan: Fix mapped memory validation error when buffer sizes are not multiple of VkPhysicalDeviceLimits::nonCoherentAtomSize.
@@ -60,6 +60,11 @@
 
 #include "imgui_impl_vulkan.h"
 #include <stdio.h>
+
+// Visual Studio warnings
+#ifdef _MSC_VER
+#pragma warning (disable: 4127) // condition expression is constant
+#endif
 
 // Reusable buffers used for rendering 1 current in-flight frame, for ImGui_ImplVulkan_RenderDrawData()
 // [Please zero-clear before use!]
@@ -113,6 +118,7 @@ struct ImGui_ImplVulkan_Data
     VkDeviceMemory              FontMemory;
     VkImage                     FontImage;
     VkImageView                 FontView;
+    VkDescriptorSet             FontDescriptorSet;
     VkDeviceMemory              UploadBufferMemory;
     VkBuffer                    UploadBuffer;
 
@@ -121,7 +127,7 @@ struct ImGui_ImplVulkan_Data
 
     ImGui_ImplVulkan_Data()
     {
-        memset(this, 0, sizeof(*this));
+        memset((void*)this, 0, sizeof(*this));
         BufferMemoryAlignment = 256;
     }
 };
@@ -407,7 +413,7 @@ static void ImGui_ImplVulkan_SetupRenderState(ImDrawData* draw_data, VkPipeline 
 {
     ImGui_ImplVulkan_Data* bd = ImGui_ImplVulkan_GetBackendData();
 
-    // Bind pipeline and descriptor sets:
+    // Bind pipeline:
     {
         vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
     }
@@ -551,7 +557,7 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
                 if (clip_min.y < 0.0f) { clip_min.y = 0.0f; }
                 if (clip_max.x > fb_width) { clip_max.x = (float)fb_width; }
                 if (clip_max.y > fb_height) { clip_max.y = (float)fb_height; }
-                if (clip_max.x < clip_min.x || clip_max.y < clip_min.y)
+                if (clip_max.x <= clip_min.x || clip_max.y <= clip_min.y)
                     continue;
 
                 // Apply scissor/clipping rectangle
@@ -756,6 +762,7 @@ static void ImGui_ImplVulkan_CreateFontSampler(VkDevice device, const VkAllocati
     if (bd->FontSampler)
         return;
 
+    // Bilinear sampling is required by default. Set 'io.Fonts->Flags |= ImFontAtlasFlags_NoBakedLines' or 'style.AntiAliasedLinesUseTex = false' to allow point/nearest sampling.
     VkSamplerCreateInfo info = {};
     info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
     info.magFilter = VK_FILTER_LINEAR;
@@ -1120,7 +1127,6 @@ void ImGui_ImplVulkan_SetMinImageCount(uint32_t min_image_count)
 
     bd->VulkanInitInfo.MinImageCount = min_image_count;
 }
-
 
 //-------------------------------------------------------------------------
 // Internal / Miscellaneous Vulkan Helpers

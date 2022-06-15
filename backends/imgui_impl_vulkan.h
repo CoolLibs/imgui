@@ -59,7 +59,7 @@ struct ImGui_ImplVulkan_InitInfo
     uint32_t                        Subpass;
     uint32_t                        MinImageCount;          // >= 2
     uint32_t                        ImageCount;             // >= MinImageCount
-    VkSampleCountFlagBits           MSAASamples;            // >= VK_SAMPLE_COUNT_1_BIT
+    VkSampleCountFlagBits           MSAASamples;            // >= VK_SAMPLE_COUNT_1_BIT (0 -> default to VK_SAMPLE_COUNT_1_BIT)
     const VkAllocationCallbacks*    Allocator;
     void                            (*CheckVkResultFn)(VkResult err);
 };
@@ -77,7 +77,7 @@ IMGUI_IMPL_API void        ImGui_ImplVulkan_UpdateTexture(ImTextureID im_texture
 
 // Optional: load Vulkan functions with a custom function loader
 // This is only useful with IMGUI_IMPL_VULKAN_NO_PROTOTYPES / VK_NO_PROTOTYPES
-IMGUI_IMPL_API bool     ImGui_ImplVulkan_LoadFunctions(PFN_vkVoidFunction(*loader_func)(const char* function_name, void* user_data), void* user_data = NULL);
+IMGUI_IMPL_API bool         ImGui_ImplVulkan_LoadFunctions(PFN_vkVoidFunction(*loader_func)(const char* function_name, void* user_data), void* user_data = NULL);
 
 //-------------------------------------------------------------------------
 // Internal / Miscellaneous Vulkan Helpers
@@ -146,8 +146,8 @@ struct ImGui_ImplVulkanH_Window
 
     ImGui_ImplVulkanH_Window()
     {
-        memset(this, 0, sizeof(*this));
-        PresentMode = VK_PRESENT_MODE_MAX_ENUM_KHR;
+        memset((void*)this, 0, sizeof(*this));
+        PresentMode = (VkPresentModeKHR)~0;     // Ensure we get an error if user doesn't set this.
         ClearEnable = true;
     }
 };
