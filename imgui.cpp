@@ -6529,6 +6529,8 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         SetWindowCollapsed(window, g.NextWindowData.CollapsedVal, g.NextWindowData.CollapsedCond);
     if (g.NextWindowData.Flags & ImGuiNextWindowDataFlags_HasFocus)
         FocusWindow(window);
+    if (g.NextWindowData.Flags & ImGuiNextWindowDataFlags_BringToFront)
+        BringWindowToFront(window);
     if (window->Appearing)
         SetWindowConditionAllowFlags(window, ImGuiCond_Appearing, false);
 
@@ -7356,6 +7358,15 @@ void ImGui::FocusWindow(ImGuiWindow* window)
         BringWindowToDisplayFront(display_front_window);
 }
 
+void ImGui::BringWindowToFront(ImGuiWindow* window)
+{
+    BringWindowToFocusFront(window);
+    BringWindowToDisplayFront(window);
+    ImGuiDockNode* dock_node = window ? window->DockNode : NULL;
+    if (dock_node && dock_node->TabBar)
+        dock_node->TabBar->SelectedTabId = dock_node->TabBar->NextSelectedTabId = window->TabId;
+}
+
 void ImGui::FocusTopMostWindowUnderOne(ImGuiWindow* under_this_window, ImGuiWindow* ignore_window)
 {
     ImGuiContext& g = *GImGui;
@@ -7875,6 +7886,12 @@ void ImGui::SetNextWindowFocus()
 {
     ImGuiContext& g = *GImGui;
     g.NextWindowData.Flags |= ImGuiNextWindowDataFlags_HasFocus;
+}
+
+void ImGui::SetNextWindowToFront()
+{
+    ImGuiContext& g = *GImGui;
+    g.NextWindowData.Flags |= ImGuiNextWindowDataFlags_BringToFront;
 }
 
 void ImGui::SetNextWindowBgAlpha(float alpha)

@@ -1072,7 +1072,8 @@ enum ImGuiNextWindowDataFlags_
     ImGuiNextWindowDataFlags_HasScroll          = 1 << 7,
     ImGuiNextWindowDataFlags_HasViewport        = 1 << 8,
     ImGuiNextWindowDataFlags_HasDock            = 1 << 9,
-    ImGuiNextWindowDataFlags_HasWindowClass     = 1 << 10
+    ImGuiNextWindowDataFlags_HasWindowClass     = 1 << 10,
+    ImGuiNextWindowDataFlags_BringToFront       = 1 << 11
 };
 
 // Storage for SetNexWindow** functions
@@ -2740,6 +2741,7 @@ namespace ImGui
     // Windows: Display Order and Focus Order
     IMGUI_API void          FocusWindow(ImGuiWindow* window);
     IMGUI_API void          FocusTopMostWindowUnderOne(ImGuiWindow* under_this_window, ImGuiWindow* ignore_window);
+    IMGUI_API void          BringWindowToFront(ImGuiWindow* window);
     IMGUI_API void          BringWindowToFocusFront(ImGuiWindow* window);
     IMGUI_API void          BringWindowToDisplayFront(ImGuiWindow* window);
     IMGUI_API void          BringWindowToDisplayBack(ImGuiWindow* window);
