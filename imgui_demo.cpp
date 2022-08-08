@@ -77,6 +77,7 @@ Index of this file:
 #endif
 
 #include "imgui.h"
+#include "imgui_internal.h"
 #ifndef IMGUI_DISABLE
 
 // System includes
@@ -419,6 +420,10 @@ void ImGui::ShowDemoWindow(bool* p_open)
             ImGui::MenuItem("Style Editor", NULL, &show_app_style_editor);
             ImGui::MenuItem("About Dear ImGui", NULL, &show_app_about);
             ImGui::EndMenu();
+        }
+        if (ImGui::MenuItem("Item Picker.."))
+        {
+            ImGui::DebugStartItemPicker();
         }
         ImGui::EndMenuBar();
     }
