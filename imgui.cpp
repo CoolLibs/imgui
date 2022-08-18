@@ -7358,6 +7358,11 @@ void ImGui::FocusWindow(ImGuiWindow* window)
         BringWindowToDisplayFront(display_front_window);
 }
 
+void ImGui::SetWindowToFront()
+{
+    BringWindowToFront(GImGui->CurrentWindow);
+}
+
 void ImGui::BringWindowToFront(ImGuiWindow* window)
 {
     BringWindowToFocusFront(window);
