@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.8)
 
 add_library(ImGui)
 add_library(ImGui::ImGui ALIAS ImGui)
-target_compile_features(ImGui INTERFACE cxx_std_20)
+target_compile_features(ImGui PUBLIC cxx_std_20)
 
 if (WIN32)
     target_link_libraries(ImGui PRIVATE imm32) # Required only when using mingw, not Visual Studio
