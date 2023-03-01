@@ -2,12 +2,12 @@
 // This needs to be used along with a Platform Backend (e.g. GLFW, SDL, Win32, custom..)
 
 // Implemented features:
-//  [X] Renderer: Support for large meshes (64k+ vertices) with 16-bit indices.
-//  [x] Platform: Multi-viewport / platform windows. With issues (flickering when creating a new viewport).
-//  [x] Renderer: User texture binding.
-//        In this binding, ImTextureID is used to store a 'VkDescriptorSet' texture identifier.
-//        Those changes are thanks to https://github.com/martty/imgui/commit/f1f948bea715754ad5e83d4dd9f928aecb4ed1d3
-//        Read the FAQ about ImTextureID in imgui.cpp.
+//  [x] Renderer: User texture binding. Use 'VkDescriptorSet' as ImTextureID. Read the FAQ about ImTextureID! See https://github.com/ocornut/imgui/pull/914 for discussions.
+//  [X] Renderer: Large meshes support (64k+ vertices) with 16-bit indices.
+//  [x] Renderer: Multi-viewport / platform windows. With issues (flickering when creating a new viewport).
+
+// Important: on 32-bit systems, user texture binding is only supported if your imconfig file has '#define ImTextureID ImU64'.
+// See imgui_impl_vulkan.cpp file for details.
 
 // You can use unmodified imgui_impl_* files in your project. See examples/ folder for examples of using this.
 // Prefer including the entire imgui/ repository into your project (either as a copy or as a submodule), and only build the backends you need.
@@ -65,19 +65,23 @@ struct ImGui_ImplVulkan_InitInfo
 };
 
 // Called by user code
-IMGUI_IMPL_API bool        ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info, VkRenderPass render_pass);
-IMGUI_IMPL_API void        ImGui_ImplVulkan_Shutdown();
-IMGUI_IMPL_API void        ImGui_ImplVulkan_NewFrame();
-IMGUI_IMPL_API void        ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer, VkPipeline pipeline = VK_NULL_HANDLE);
-IMGUI_IMPL_API bool        ImGui_ImplVulkan_CreateFontsTexture(VkCommandBuffer command_buffer);
-IMGUI_IMPL_API void        ImGui_ImplVulkan_DestroyFontUploadObjects();
-IMGUI_IMPL_API void        ImGui_ImplVulkan_SetMinImageCount(uint32_t min_image_count); // To override MinImageCount after initialization (e.g. if swap chain is recreated)
-IMGUI_IMPL_API ImTextureID ImGui_ImplVulkan_AddTexture(VkSampler sampler, VkImageView image_view, VkImageLayout image_layout);
-IMGUI_IMPL_API void        ImGui_ImplVulkan_UpdateTexture(ImTextureID im_texture_id, VkSampler sampler, VkImageView image_view, VkImageLayout image_layout);
+IMGUI_IMPL_API bool         ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info, VkRenderPass render_pass);
+IMGUI_IMPL_API void         ImGui_ImplVulkan_Shutdown();
+IMGUI_IMPL_API void         ImGui_ImplVulkan_NewFrame();
+IMGUI_IMPL_API void         ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer, VkPipeline pipeline = VK_NULL_HANDLE);
+IMGUI_IMPL_API bool         ImGui_ImplVulkan_CreateFontsTexture(VkCommandBuffer command_buffer);
+IMGUI_IMPL_API void         ImGui_ImplVulkan_DestroyFontUploadObjects();
+IMGUI_IMPL_API void         ImGui_ImplVulkan_SetMinImageCount(uint32_t min_image_count); // To override MinImageCount after initialization (e.g. if swap chain is recreated)
+
+// Register a texture (VkDescriptorSet == ImTextureID)
+// FIXME: This is experimental in the sense that we are unsure how to best design/tackle this problem
+// Please post to https://github.com/ocornut/imgui/pull/914 if you have suggestions.
+IMGUI_IMPL_API VkDescriptorSet ImGui_ImplVulkan_AddTexture(VkSampler sampler, VkImageView image_view, VkImageLayout image_layout);
+IMGUI_IMPL_API void            ImGui_ImplVulkan_RemoveTexture(VkDescriptorSet descriptor_set);
 
 // Optional: load Vulkan functions with a custom function loader
 // This is only useful with IMGUI_IMPL_VULKAN_NO_PROTOTYPES / VK_NO_PROTOTYPES
-IMGUI_IMPL_API bool         ImGui_ImplVulkan_LoadFunctions(PFN_vkVoidFunction(*loader_func)(const char* function_name, void* user_data), void* user_data = NULL);
+IMGUI_IMPL_API bool         ImGui_ImplVulkan_LoadFunctions(PFN_vkVoidFunction(*loader_func)(const char* function_name, void* user_data), void* user_data = nullptr);
 
 //-------------------------------------------------------------------------
 // Internal / Miscellaneous Vulkan Helpers
