@@ -674,7 +674,7 @@ bool ImGui::ButtonBehavior(const ImRect& bb, ImGuiID id, bool* out_hovered, bool
     return pressed;
 }
 
-bool ImGui::ButtonEx(const char* label, const ImVec2& size_arg, ImGuiButtonFlags flags)
+bool ImGui::ButtonEx(const char* label, const ImVec2& size_arg, ImGuiButtonFlags flags, ImDrawFlags draw_flags)
 {
     ImGuiWindow* window = GetCurrentWindow();
     if (window->SkipItems)
@@ -704,7 +704,7 @@ bool ImGui::ButtonEx(const char* label, const ImVec2& size_arg, ImGuiButtonFlags
     // Render
     const ImU32 col = GetColorU32((held && hovered) ? ImGuiCol_ButtonActive : hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
     RenderNavHighlight(bb, id);
-    RenderFrame(bb.Min, bb.Max, col, true, style.FrameRounding);
+    RenderFrame(bb.Min, bb.Max, col, true, style.FrameRounding, draw_flags);
 
     if (g.LogEnabled)
         LogSetNextTextDecoration("[", "]");
@@ -718,9 +718,9 @@ bool ImGui::ButtonEx(const char* label, const ImVec2& size_arg, ImGuiButtonFlags
     return pressed;
 }
 
-bool ImGui::Button(const char* label, const ImVec2& size_arg)
+bool ImGui::Button(const char* label, const ImVec2& size_arg, ImDrawFlags draw_flags)
 {
-    return ButtonEx(label, size_arg, ImGuiButtonFlags_None);
+    return ButtonEx(label, size_arg, ImGuiButtonFlags_None, draw_flags);
 }
 
 // Small buttons fits within text without additional vertical spacing.
@@ -1460,7 +1460,7 @@ void ImGui::SeparatorEx(ImGuiSeparatorFlags flags)
     }
 }
 
-void ImGui::Separator()
+void ImGui::Separator(ImGuiSeparatorFlags separator_flags)
 {
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
@@ -1468,7 +1468,10 @@ void ImGui::Separator()
         return;
 
     // Those flags should eventually be overridable by the user
-    ImGuiSeparatorFlags flags = (window->DC.LayoutType == ImGuiLayoutType_Horizontal) ? ImGuiSeparatorFlags_Vertical : ImGuiSeparatorFlags_Horizontal;
+    ImGuiSeparatorFlags flags = separator_flags
+                                    ? separator_flags
+                                : (window->DC.LayoutType == ImGuiLayoutType_Horizontal) ? ImGuiSeparatorFlags_Vertical
+                                                                                        : ImGuiSeparatorFlags_Horizontal;
     flags |= ImGuiSeparatorFlags_SpanAllColumns; // NB: this only applies to legacy Columns() api as they relied on Separator() a lot.
     SeparatorEx(flags);
 }
