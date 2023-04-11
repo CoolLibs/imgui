@@ -7448,6 +7448,7 @@ void ImGui::SetWindowToFront()
 
 void ImGui::BringWindowToFront(ImGuiWindow* window)
 {
+    SetWindowFocus(nullptr); // Required when the `window` is in the same tab bar as the currently focused window.
     BringWindowToFocusFront(window);
     BringWindowToDisplayFront(window);
     ImGuiDockNode* dock_node = window ? window->DockNode : NULL;
