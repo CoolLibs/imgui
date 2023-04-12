@@ -834,11 +834,11 @@ bool ImGui::CloseButton(ImGuiID id, const ImVec2& pos, bool tweak_for_tab_bar)
             window->DrawList->AddCircleFilled(center, ImMax(2.0f, g.FontSize * 0.5f + 1.0f), col, 12);
     }
 
-    float cross_extent = g.FontSize * 0.5f * 0.7071f - 1.0f;
     ImU32 cross_col = GetColorU32(ImGuiCol_Text);
-    center -= ImVec2(0.5f, 0.5f);
-    window->DrawList->AddLine(center + ImVec2(+cross_extent, +cross_extent), center + ImVec2(-cross_extent, -cross_extent), cross_col, 1.0f);
-    window->DrawList->AddLine(center + ImVec2(+cross_extent, -cross_extent), center + ImVec2(-cross_extent, +cross_extent), cross_col, 1.0f);
+    center -= ImVec2(0.5f, 0.5f) * g.FontSize * 0.7071f;
+    center.x += g.FontSize * 0.5f * 0.5f;
+    center.y += g.FontSize * 0.02f;
+    window->DrawList->AddText(nullptr, g.FontSize * 0.7071f, center, cross_col, "\xee\xa8\x8f"/*ICOMOON_CROSS*/);
 
     return pressed;
 }
