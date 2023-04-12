@@ -798,7 +798,7 @@ bool ImGui::ArrowButton(const char* str_id, ImGuiDir dir)
 }
 
 // Button to close a window
-bool ImGui::CloseButton(ImGuiID id, const ImVec2& pos)
+bool ImGui::CloseButton(ImGuiID id, const ImVec2& pos, bool tweak_for_tab_bar)
 {
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
@@ -822,10 +822,17 @@ bool ImGui::CloseButton(ImGuiID id, const ImVec2& pos)
 
     // Render
     // FIXME: Clarify this mess
+    if (tweak_for_tab_bar)
+        window->DrawList->AddLine(bb.Min - ImVec2{0.f, 1.f}, {bb.Min.x, bb.Max.y - 1.0f}, GetColorU32(ImGuiCol_Separator));
     ImU32 col = GetColorU32(held ? ImGuiCol_ButtonActive : ImGuiCol_ButtonHovered);
     ImVec2 center = bb.GetCenter();
     if (hovered)
-        window->DrawList->AddCircleFilled(center, ImMax(2.0f, g.FontSize * 0.5f + 1.0f), col, 12);
+    {
+        if(tweak_for_tab_bar)
+            window->DrawList->AddRectFilled(bb_interact.Min, bb_interact.Max, col);
+        else
+            window->DrawList->AddCircleFilled(center, ImMax(2.0f, g.FontSize * 0.5f + 1.0f), col, 12);
+    }
 
     float cross_extent = g.FontSize * 0.5f * 0.7071f - 1.0f;
     ImU32 cross_col = GetColorU32(ImGuiCol_Text);
@@ -852,7 +859,8 @@ bool ImGui::CollapseButton(ImGuiID id, const ImVec2& pos, ImGuiDockNode* dock_no
     ImU32 bg_col = GetColorU32((held && hovered) ? ImGuiCol_ButtonActive : hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
     ImU32 text_col = GetColorU32(ImGuiCol_Text);
     if (hovered || held)
-        window->DrawList->AddCircleFilled(bb.GetCenter() + ImVec2(0,-0.5f), g.FontSize * 0.5f + 1.0f, bg_col, 12);
+        window->DrawList->AddRectFilled(bb.Min, bb.Max, bg_col);
+    window->DrawList->AddLine(bb.Min - ImVec2{0.f, 1.f}, {bb.Min.x, bb.Max.y - 1.0f}, GetColorU32(ImGuiCol_Separator));
 
     if (dock_node)
         RenderArrowDockMenu(window->DrawList, bb.Min + g.Style.FramePadding, g.FontSize, text_col);
