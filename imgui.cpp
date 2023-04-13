@@ -5050,18 +5050,19 @@ static void ImGui::RenderDimmedBackgrounds()
         viewports_already_dimmed[1] = g.NavWindowingListWindow ? g.NavWindowingListWindow->Viewport : NULL;
 
         // Draw border around CTRL+Tab target window
-        ImGuiWindow* window = g.NavWindowingTargetAnim;
-        ImGuiViewport* viewport = window->Viewport;
-        float distance = g.FontSize;
-        ImRect bb = window->Rect();
-        bb.Expand(distance);
-        if (bb.GetWidth() >= viewport->Size.x && bb.GetHeight() >= viewport->Size.y)
-            bb.Expand(-distance - 1.0f); // If a window fits the entire viewport, adjust its highlight inward
-        if (window->DrawList->CmdBuffer.Size == 0)
-            window->DrawList->AddDrawCmd();
-        window->DrawList->PushClipRect(viewport->Pos, viewport->Pos + viewport->Size);
-        window->DrawList->AddRect(bb.Min, bb.Max, GetColorU32(ImGuiCol_NavWindowingHighlight, g.NavWindowingHighlightAlpha), window->WindowRounding, 0, 3.0f);
-        window->DrawList->PopClipRect();
+        /// (JF) Disabled because I don't like the look of it
+        // ImGuiWindow* window = g.NavWindowingTargetAnim;
+        // ImGuiViewport* viewport = window->Viewport;
+        // float distance = g.FontSize;
+        // ImRect bb = window->Rect();
+        // bb.Expand(distance);
+        // if (bb.GetWidth() >= viewport->Size.x && bb.GetHeight() >= viewport->Size.y)
+        //     bb.Expand(-distance - 1.0f); // If a window fits the entire viewport, adjust its highlight inward
+        // if (window->DrawList->CmdBuffer.Size == 0)
+        //     window->DrawList->AddDrawCmd();
+        // window->DrawList->PushClipRect(viewport->Pos, viewport->Pos + viewport->Size);
+        // window->DrawList->AddRect(bb.Min, bb.Max, GetColorU32(ImGuiCol_NavWindowingHighlight, g.NavWindowingHighlightAlpha), window->WindowRounding, 0, 3.0f);
+        // window->DrawList->PopClipRect();
     }
 
     // Draw dimming background on _other_ viewports than the ones our windows are in
