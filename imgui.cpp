@@ -17563,7 +17563,7 @@ static void ImGui::DockNodeUpdateTabBar(ImGuiDockNode* node, ImGuiWindow* host_w
     // Docking/Collapse button
     if (has_window_menu_button)
     {
-        if (CollapseButton(host_window->GetID("#COLLAPSE"), window_menu_button_pos, node)) // == DockNodeGetWindowMenuButtonId(node)
+        if (CollapseButton(host_window->GetID("#COLLAPSE"), window_menu_button_pos, node, title_bar_rect.GetHeight())) // == DockNodeGetWindowMenuButtonId(node)
             OpenPopup("#WindowMenu");
         if (IsItemActive())
             focus_tab_id = tab_bar->SelectedTabId;
@@ -17668,7 +17668,7 @@ static void ImGui::DockNodeUpdateTabBar(ImGuiDockNode* node, ImGuiWindow* host_w
             PushItemFlag(ImGuiItemFlags_Disabled, true);
             PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_Text] * ImVec4(1.0f,1.0f,1.0f,0.4f));
         }
-        if (CloseButton(host_window->GetID("#CLOSE"), close_button_pos))
+        if (CloseButton(host_window->GetID("#CLOSE"), close_button_pos, title_bar_rect.GetHeight(), true))
         {
             node->WantCloseAll = true;
             for (int n = 0; n < tab_bar->Tabs.Size; n++)
@@ -17800,6 +17800,7 @@ static bool ImGui::DockNodeIsDropAllowed(ImGuiWindow* host_window, ImGuiWindow* 
 // FIXME: This is similar to RenderWindowTitleBarContents(), may want to share code.
 static void ImGui::DockNodeCalcTabBarLayout(const ImGuiDockNode* node, ImRect* out_title_rect, ImRect* out_tab_bar_rect, ImVec2* out_window_menu_button_pos, ImVec2* out_close_button_pos)
 {
+    // (JF) Tweaked to make close and collapse buttons squares that fill the entire tab bar height
     ImGuiContext& g = *GImGui;
     ImGuiStyle& style = g.Style;
 
@@ -17807,25 +17808,25 @@ static void ImGui::DockNodeCalcTabBarLayout(const ImGuiDockNode* node, ImRect* o
     if (out_title_rect) { *out_title_rect = r; }
 
     r.Min.x += style.WindowBorderSize;
-    r.Max.x -= style.WindowBorderSize;
+    // r.Max.x -= style.WindowBorderSize; // (JF)
 
-    float button_sz = g.FontSize;
+    float button_sz = r.GetHeight(); // g.FontSize; // (JF)
     r.Min.x += style.FramePadding.x;
-    r.Max.x -= style.FramePadding.x;
-    ImVec2 window_menu_button_pos = ImVec2(r.Min.x, r.Min.y + style.FramePadding.y);
+    // r.Max.x -= style.FramePadding.x;
+    ImVec2 window_menu_button_pos = ImVec2(r.Min.x, r.Min.y /* + style.FramePadding.y */); // (JF)
     if (node->HasCloseButton)
     {
-        if (out_close_button_pos) *out_close_button_pos = ImVec2(r.Max.x - button_sz, r.Min.y + style.FramePadding.y);
-        r.Max.x -= button_sz + style.ItemInnerSpacing.x;
+        if (out_close_button_pos) *out_close_button_pos = ImVec2(r.Max.x - button_sz, r.Min.y /* + style.FramePadding.y */); // (JF)
+        r.Max.x -= button_sz; // + style.ItemInnerSpacing.x; // (JF)
     }
     if (node->HasWindowMenuButton && style.WindowMenuButtonPosition == ImGuiDir_Left)
     {
-        r.Min.x += button_sz + style.ItemInnerSpacing.x;
+        r.Min.x += button_sz; // + style.ItemInnerSpacing.x; // (JF)
     }
     else if (node->HasWindowMenuButton && style.WindowMenuButtonPosition == ImGuiDir_Right)
     {
-        window_menu_button_pos = ImVec2(r.Max.x - button_sz, r.Min.y + style.FramePadding.y);
-        r.Max.x -= button_sz + style.ItemInnerSpacing.x;
+        window_menu_button_pos = ImVec2(r.Max.x - button_sz, r.Min.y/*  + style.FramePadding.y */); // (JF)
+        r.Max.x -= button_sz; // + style.ItemInnerSpacing.x; // (JF)
     }
     if (out_tab_bar_rect) { *out_tab_bar_rect = r; }
     if (out_window_menu_button_pos) { *out_window_menu_button_pos = window_menu_button_pos; }

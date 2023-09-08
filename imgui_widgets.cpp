@@ -795,14 +795,15 @@ bool ImGui::ArrowButton(const char* str_id, ImGuiDir dir)
 }
 
 // Button to close a window
-bool ImGui::CloseButton(ImGuiID id, const ImVec2& pos, bool tweak_for_tab_bar)
+bool ImGui::CloseButton(ImGuiID id, const ImVec2& pos, float height, bool tweak_for_tab_bar)
 {
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
 
     // Tweak 1: Shrink hit-testing area if button covers an abnormally large proportion of the visible region. That's in order to facilitate moving the window away. (#3825)
     // This may better be applied as a general hit-rect reduction mechanism for all widgets to ensure the area to move window is always accessible?
-    const ImRect bb(pos, pos + ImVec2(g.FontSize, g.FontSize));
+    height = height != -1.f ? height : g.FontSize;
+    const ImRect bb(pos, pos + ImVec2(height /* g.FontSize */, height/* g.FontSize */));
     ImRect bb_interact = bb;
     const float area_to_visible_ratio = window->OuterRectClipped.GetArea() / bb.GetArea();
     if (area_to_visible_ratio < 1.5f)
@@ -819,10 +820,17 @@ bool ImGui::CloseButton(ImGuiID id, const ImVec2& pos, bool tweak_for_tab_bar)
 
     // Render
     // FIXME: Clarify this mess
+    if (tweak_for_tab_bar)
+        window->DrawList->AddLine(bb_interact.Min - ImVec2{0.f, 1.f}, {bb_interact.Min.x, bb_interact.Max.y - 1.0f}, GetColorU32(ImGuiCol_Separator));
     ImU32 col = GetColorU32(held ? ImGuiCol_ButtonActive : ImGuiCol_ButtonHovered);
     ImVec2 center = bb.GetCenter();
     if (hovered)
-        window->DrawList->AddCircleFilled(center, ImMax(2.0f, g.FontSize * 0.5f + 1.0f), col);
+    {
+        if(tweak_for_tab_bar)
+            window->DrawList->AddRectFilled(bb_interact.Min, bb_interact.Max, col);
+        else
+            window->DrawList->AddCircleFilled(center, ImMax(2.0f, height /* g.FontSize */ * 0.5f + 1.0f), col);
+    }
 
     float cross_extent = g.FontSize * 0.5f * 0.7071f - 1.0f;
     ImU32 cross_col = GetColorU32(ImGuiCol_Text);
@@ -834,12 +842,13 @@ bool ImGui::CloseButton(ImGuiID id, const ImVec2& pos, bool tweak_for_tab_bar)
 }
 
 // The Collapse button also functions as a Dock Menu button.
-bool ImGui::CollapseButton(ImGuiID id, const ImVec2& pos, ImGuiDockNode* dock_node)
+bool ImGui::CollapseButton(ImGuiID id, const ImVec2& pos, ImGuiDockNode* dock_node, float height)
 {
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
 
-    ImRect bb(pos, pos + ImVec2(g.FontSize, g.FontSize));
+    height = height != -1.f ? height : g.FontSize;
+    ImRect bb(pos, pos + ImVec2(height /* g.FontSize */, height /* g.FontSize */));
     bool is_clipped = !ItemAdd(bb, id);
     bool hovered, held;
     bool pressed = ButtonBehavior(bb, id, &hovered, &held, ImGuiButtonFlags_None);
@@ -851,7 +860,8 @@ bool ImGui::CollapseButton(ImGuiID id, const ImVec2& pos, ImGuiDockNode* dock_no
     ImU32 bg_col = GetColorU32((held && hovered) ? ImGuiCol_ButtonActive : hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
     ImU32 text_col = GetColorU32(ImGuiCol_Text);
     if (hovered || held)
-        window->DrawList->AddCircleFilled(bb.GetCenter() + ImVec2(0.0f, -0.5f), g.FontSize * 0.5f + 1.0f, bg_col);
+        window->DrawList->AddRectFilled(bb.Min, bb.Max, bg_col);
+    window->DrawList->AddLine(bb.Min - ImVec2{0.f, 1.f}, {bb.Min.x, bb.Max.y - 1.0f}, GetColorU32(ImGuiCol_Separator));
 
     if (dock_node)
         RenderArrowDockMenu(window->DrawList, bb.Min, g.FontSize, text_col);
