@@ -832,11 +832,12 @@ bool ImGui::CloseButton(ImGuiID id, const ImVec2& pos, float height, bool tweak_
             window->DrawList->AddCircleFilled(center, ImMax(2.0f, height /* g.FontSize */ * 0.5f + 1.0f), col);
     }
 
-    float cross_extent = g.FontSize * 0.5f * 0.7071f - 1.0f;
+    // float cross_extent = g.FontSize * 0.5f * 0.7071f - 1.0f; // (JF)
     ImU32 cross_col = GetColorU32(ImGuiCol_Text);
-    center -= ImVec2(0.5f, 0.5f);
-    window->DrawList->AddLine(center + ImVec2(+cross_extent, +cross_extent), center + ImVec2(-cross_extent, -cross_extent), cross_col, 1.0f);
-    window->DrawList->AddLine(center + ImVec2(+cross_extent, -cross_extent), center + ImVec2(-cross_extent, +cross_extent), cross_col, 1.0f);
+    // center -= ImVec2(0.5f, 0.5f); // (JF)
+    // window->DrawList->AddLine(center + ImVec2(+cross_extent, +cross_extent), center + ImVec2(-cross_extent, -cross_extent), cross_col, 1.0f); // (JF)
+    // window->DrawList->AddLine(center + ImVec2(+cross_extent, -cross_extent), center + ImVec2(-cross_extent, +cross_extent), cross_col, 1.0f); // (JF)
+    window->DrawList->AddText(nullptr, g.FontSize * 0.7071f, center - ImVec2(0.1f, 0.336f) * g.FontSize, cross_col, "\xee\xa8\x8f"/*ICOMOON_CROSS*/);
 
     return pressed;
 }
@@ -864,7 +865,7 @@ bool ImGui::CollapseButton(ImGuiID id, const ImVec2& pos, ImGuiDockNode* dock_no
     window->DrawList->AddLine(bb.Min - ImVec2{0.f, 1.f}, {bb.Min.x, bb.Max.y - 1.0f}, GetColorU32(ImGuiCol_Separator));
 
     if (dock_node)
-        RenderArrowDockMenu(window->DrawList, bb.Min, g.FontSize, text_col);
+        RenderArrowDockMenu(window->DrawList, bb.Min + ImVec2(0.354f, 0.275f) * g.FontSize, g.FontSize, text_col);
     else
         RenderArrow(window->DrawList, bb.Min, text_col, window->Collapsed ? ImGuiDir_Right : ImGuiDir_Down, 1.0f);
 
