@@ -795,14 +795,15 @@ bool ImGui::ArrowButton(const char* str_id, ImGuiDir dir)
 }
 
 // Button to close a window
-bool ImGui::CloseButton(ImGuiID id, const ImVec2& pos, bool tweak_for_tab_bar)
+bool ImGui::CloseButton(ImGuiID id, const ImVec2& pos, float height, bool tweak_for_tab_bar)
 {
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
 
     // Tweak 1: Shrink hit-testing area if button covers an abnormally large proportion of the visible region. That's in order to facilitate moving the window away. (#3825)
     // This may better be applied as a general hit-rect reduction mechanism for all widgets to ensure the area to move window is always accessible?
-    const ImRect bb(pos, pos + ImVec2(g.FontSize, g.FontSize));
+    height = height != -1.f ? height : g.FontSize;
+    const ImRect bb(pos, pos + ImVec2(height /* g.FontSize */, height/* g.FontSize */));
     ImRect bb_interact = bb;
     const float area_to_visible_ratio = window->OuterRectClipped.GetArea() / bb.GetArea();
     if (area_to_visible_ratio < 1.5f)
@@ -820,7 +821,7 @@ bool ImGui::CloseButton(ImGuiID id, const ImVec2& pos, bool tweak_for_tab_bar)
     // Render
     // FIXME: Clarify this mess
     if (tweak_for_tab_bar)
-        window->DrawList->AddLine(bb.Min - ImVec2{0.f, 1.f}, {bb.Min.x, bb.Max.y - 1.0f}, GetColorU32(ImGuiCol_Separator));
+        window->DrawList->AddLine(bb_interact.Min - ImVec2{0.f, 1.f}, {bb_interact.Min.x, bb_interact.Max.y - 1.0f}, GetColorU32(ImGuiCol_Separator));
     ImU32 col = GetColorU32(held ? ImGuiCol_ButtonActive : ImGuiCol_ButtonHovered);
     ImVec2 center = bb.GetCenter();
     if (hovered)
@@ -828,25 +829,27 @@ bool ImGui::CloseButton(ImGuiID id, const ImVec2& pos, bool tweak_for_tab_bar)
         if(tweak_for_tab_bar)
             window->DrawList->AddRectFilled(bb_interact.Min, bb_interact.Max, col);
         else
-            window->DrawList->AddCircleFilled(center, ImMax(2.0f, g.FontSize * 0.5f + 1.0f), col, 12);
+            window->DrawList->AddCircleFilled(center, ImMax(2.0f, height /* g.FontSize */ * 0.5f + 1.0f), col);
     }
 
+    // float cross_extent = g.FontSize * 0.5f * 0.7071f - 1.0f; // (JF)
     ImU32 cross_col = GetColorU32(ImGuiCol_Text);
-    center -= ImVec2(0.5f, 0.5f) * g.FontSize * 0.7071f;
-    center.x += g.FontSize * 0.5f * 0.5f;
-    center.y += g.FontSize * 0.02f;
-    window->DrawList->AddText(nullptr, g.FontSize * 0.7071f, center, cross_col, "\xee\xa8\x8f"/*ICOMOON_CROSS*/);
+    // center -= ImVec2(0.5f, 0.5f); // (JF)
+    // window->DrawList->AddLine(center + ImVec2(+cross_extent, +cross_extent), center + ImVec2(-cross_extent, -cross_extent), cross_col, 1.0f); // (JF)
+    // window->DrawList->AddLine(center + ImVec2(+cross_extent, -cross_extent), center + ImVec2(-cross_extent, +cross_extent), cross_col, 1.0f); // (JF)
+    window->DrawList->AddText(nullptr, g.FontSize * 0.7071f, center - ImVec2(0.1f, 0.336f) * g.FontSize, cross_col, "\xee\xa8\x8f"/*ICOMOON_CROSS*/);
 
     return pressed;
 }
 
 // The Collapse button also functions as a Dock Menu button.
-bool ImGui::CollapseButton(ImGuiID id, const ImVec2& pos, ImGuiDockNode* dock_node)
+bool ImGui::CollapseButton(ImGuiID id, const ImVec2& pos, ImGuiDockNode* dock_node, float height)
 {
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
 
-    ImRect bb(pos, pos + ImVec2(g.FontSize, g.FontSize));
+    height = height != -1.f ? height : g.FontSize;
+    ImRect bb(pos, pos + ImVec2(height /* g.FontSize */, height /* g.FontSize */));
     bool is_clipped = !ItemAdd(bb, id);
     bool hovered, held;
     bool pressed = ButtonBehavior(bb, id, &hovered, &held, ImGuiButtonFlags_None);
@@ -862,7 +865,7 @@ bool ImGui::CollapseButton(ImGuiID id, const ImVec2& pos, ImGuiDockNode* dock_no
     window->DrawList->AddLine(bb.Min - ImVec2{0.f, 1.f}, {bb.Min.x, bb.Max.y - 1.0f}, GetColorU32(ImGuiCol_Separator));
 
     if (dock_node)
-        RenderArrowDockMenu(window->DrawList, bb.Min, g.FontSize, text_col);
+        RenderArrowDockMenu(window->DrawList, bb.Min + ImVec2(0.354f, 0.275f) * g.FontSize, g.FontSize, text_col);
     else
         RenderArrow(window->DrawList, bb.Min, text_col, window->Collapsed ? ImGuiDir_Right : ImGuiDir_Down, 1.0f);
 
@@ -1469,7 +1472,7 @@ void ImGui::SeparatorEx(ImGuiSeparatorFlags flags, float thickness)
     }
 }
 
-void ImGui::Separator(ImGuiSeparatorFlags separator_flags)
+void ImGui::Separator()
 {
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
@@ -1604,7 +1607,7 @@ bool ImGui::SplitterBehavior(const ImRect& bb, ImGuiID id, ImGuiAxis axis, float
     }
 
     // Render at new position
-    bb_render.Min += {1.f, 1.f}; // Make separator thinner
+    bb_render.Min += {1.f, 1.f}; // (JF) Make separator thinner
     if (bg_col & IM_COL32_A_MASK)
         window->DrawList->AddRectFilled(bb_render.Min, bb_render.Max, bg_col, 0.0f);
     const ImU32 col = GetColorU32(held ? ImGuiCol_SeparatorActive : (hovered && g.HoveredIdTimer >= hover_visibility_delay) ? ImGuiCol_SeparatorHovered : ImGuiCol_Separator);
@@ -1727,6 +1730,7 @@ bool ImGui::BeginCombo(const char* label, const char* preview_value, ImGuiComboF
         window->DrawList->AddRectFilled(bb.Min, ImVec2(value_x2, bb.Max.y), frame_col, style.FrameRounding, (flags & ImGuiComboFlags_NoArrowButton) ? ImDrawFlags_RoundCornersAll : ImDrawFlags_RoundCornersLeft);
     if (!(flags & ImGuiComboFlags_NoArrowButton))
     {
+        // (JF) Allow nicely matching arrows along rounded text input
         ImU32 bg_col = GetColorU32(held ? ImGuiCol_ButtonActive : (popup_open || hovered) ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
         ImU32 text_col = GetColorU32(ImGuiCol_Text);
         window->DrawList->AddRectFilled(ImVec2(value_x2, bb.Min.y), bb.Max, bg_col, style.FrameRounding, draw_flags ? draw_flags : ((w <= arrow_size) ? ImDrawFlags_RoundCornersAll : ImDrawFlags_RoundCornersRight));
@@ -3525,9 +3529,6 @@ bool ImGui::InputScalar(const char* label, ImGuiDataType data_type, void* p_data
 
         PopID();
         EndGroup();
-        
-        if (InputText(label, buf, IM_ARRAYSIZE(buf), flags, nullptr, nullptr, draw_flags))
-            value_changed = DataTypeApplyFromText(buf, data_type, p_data, format);
     }
     if (value_changed)
         MarkItemEdited(g.LastItemData.ID);
