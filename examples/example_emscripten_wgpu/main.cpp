@@ -1,7 +1,11 @@
 // Dear ImGui: standalone example application for Emscripten, using GLFW + WebGPU
 // (Emscripten is a C++-to-javascript compiler, used to publish executables for the web. See https://emscripten.org/)
-// If you are new to Dear ImGui, read documentation from the docs/ folder + read the top of imgui.cpp.
-// Read online: https://github.com/ocornut/imgui/tree/master/docs
+
+// Learn about Dear ImGui:
+// - FAQ                  https://dearimgui.com/faq
+// - Getting Started      https://dearimgui.com/getting-started
+// - Documentation        https://dearimgui.com/docs (same as your local docs/ folder).
+// - Introduction, links and more at the top of imgui.cpp
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -72,6 +76,7 @@ int main(int, char**)
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOther(window, true);
+    ImGui_ImplGlfw_InstallEmscriptenCanvasResizeCallback("#canvas");
     ImGui_ImplWGPU_Init(wgpu_device, 3, wgpu_preferred_fmt, WGPUTextureFormat_Undefined);
 
     // Load Fonts
