@@ -9676,6 +9676,41 @@ void ImGui::SetNextFrameWantCaptureMouse(bool want_capture_mouse)
     g.WantCaptureMouseNextFrame = want_capture_mouse ? 1 : 0;
 }
 
+static void WrapMousePosEx(int axes_mask, const ImRect& wrap_rect)
+{
+	ImGuiContext& g = *GImGui;
+	IM_ASSERT(axes_mask == 1 || axes_mask == 2 || axes_mask == (1 | 2));
+	ImVec2 p_mouse = g.IO.MousePos;
+	for (int axis = 0; axis < 2; axis++)
+	{
+		if ((axes_mask & (1 << axis)) == 0)
+			continue;
+		if (p_mouse[axis] >= wrap_rect.Max[axis])
+			p_mouse[axis] = wrap_rect.Min[axis] + 1.0f;
+		else if (p_mouse[axis] <= wrap_rect.Min[axis])
+			p_mouse[axis] = wrap_rect.Max[axis] - 1.0f;
+	}
+	if (p_mouse.x != g.IO.MousePos.x || p_mouse.y != g.IO.MousePos.y)
+		ImGui::TeleportMousePos(p_mouse);
+}
+
+void ImGui::WrapMousePos(int axes_mask)
+{
+	ImGuiContext& g = *GImGui;
+#ifdef IMGUI_HAS_DOCK
+	if (g.IO.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
+		const ImGuiPlatformMonitor* monitor = GetViewportPlatformMonitor(g.MouseViewport);
+		WrapMousePosEx(axes_mask, ImRect(monitor->MainPos, monitor->MainPos + monitor->MainSize - ImVec2(1.0f, 1.0f)));
+	}
+	else
+#endif
+	{
+		ImGuiViewport* viewport = GetMainViewport();
+		WrapMousePosEx(axes_mask, ImRect(viewport->Pos, viewport->Pos + viewport->Size - ImVec2(1.0f, 1.0f)));
+	}
+}
+
 #ifndef IMGUI_DISABLE_DEBUG_TOOLS
 static const char* GetInputSourceName(ImGuiInputSource source)
 {
