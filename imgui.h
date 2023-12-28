@@ -218,6 +218,7 @@ typedef int ImGuiTableRowFlags;     // -> enum ImGuiTableRowFlags_   // Flags: F
 typedef int ImGuiTreeNodeFlags;     // -> enum ImGuiTreeNodeFlags_   // Flags: for TreeNode(), TreeNodeEx(), CollapsingHeader()
 typedef int ImGuiViewportFlags;     // -> enum ImGuiViewportFlags_   // Flags: for ImGuiViewport
 typedef int ImGuiWindowFlags;       // -> enum ImGuiWindowFlags_     // Flags: for Begin(), BeginChild()
+typedef int ImGuiAxesMask;          // -> enum ImGuiAxesMask_        // Flags: An axis (X and/or Y)
 
 // ImTexture: user data for renderer backend to identify a texture [Compile-time configurable type]
 // - To use something else than an opaque void* pointer: override with e.g. '#define ImTextureID MyTextureType*' in your imconfig.h file.
@@ -997,7 +998,7 @@ namespace ImGui
     IMGUI_API ImGuiMouseCursor GetMouseCursor();                                                // get desired mouse cursor shape. Important: reset in ImGui::NewFrame(), this is updated during the frame. valid before Render(). If you use software rendering by setting io.MouseDrawCursor ImGui will render those for you
     IMGUI_API void          SetMouseCursor(ImGuiMouseCursor cursor_type);                       // set desired mouse cursor shape
     IMGUI_API void          SetNextFrameWantCaptureMouse(bool want_capture_mouse);              // Override io.WantCaptureMouse flag next frame (said flag is left for your application to handle, typical when true it instucts your app to ignore inputs). This is equivalent to setting "io.WantCaptureMouse = want_capture_mouse;" after the next NewFrame() call.
-    IMGUI_API void          WrapMousePos(int axes_mask);                                        // Makes the mouse wrap around if it is dragged past the screen's edges.
+    IMGUI_API void          WrapMousePos(ImGuiAxesMask axes_mask);                              // Makes the mouse wrap around if it is dragged past the screen's edges.
 
     // Clipboard Utilities
     // - Also see the LogToClipboard() function to capture GUI into clipboard, or easily output text data to the clipboard.
@@ -1086,6 +1087,13 @@ enum ImGuiWindowFlags_
 #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
     ImGuiWindowFlags_AlwaysUseWindowPadding = 1 << 30,  // Obsoleted in 1.90: Use ImGuiChildFlags_AlwaysUseWindowPadding in BeginChild() call.
 #endif
+};
+
+enum ImGuiAxesMask_
+{
+    ImGuiAxesMask_X = 1 << 0,
+    ImGuiAxesMask_Y = 1 << 1,
+    ImGuiAxesMask_All = ImGuiAxesMask_X | ImGuiAxesMask_Y,
 };
 
 // Flags for ImGui::BeginChild()

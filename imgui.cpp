@@ -9676,7 +9676,7 @@ void ImGui::SetNextFrameWantCaptureMouse(bool want_capture_mouse)
     g.WantCaptureMouseNextFrame = want_capture_mouse ? 1 : 0;
 }
 
-static void WrapMousePosEx(int axes_mask, const ImRect& wrap_rect)
+static void WrapMousePosEx(ImGuiAxesMask axes_mask, const ImRect& wrap_rect)
 {
 	ImGuiContext& g = *GImGui;
 	IM_ASSERT(axes_mask == 1 || axes_mask == 2 || axes_mask == (1 | 2));
@@ -9694,7 +9694,7 @@ static void WrapMousePosEx(int axes_mask, const ImRect& wrap_rect)
 		ImGui::TeleportMousePos(p_mouse);
 }
 
-void ImGui::WrapMousePos(int axes_mask)
+void ImGui::WrapMousePos(ImGuiAxesMask axes_mask)
 {
 	ImGuiContext& g = *GImGui;
 #ifdef IMGUI_HAS_DOCK
