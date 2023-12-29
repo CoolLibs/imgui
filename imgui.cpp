@@ -9700,8 +9700,11 @@ void ImGui::WrapMousePos(ImGuiAxesMask axes_mask)
 #ifdef IMGUI_HAS_DOCK
 	if (g.IO.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 	{
-		const ImGuiPlatformMonitor* monitor = GetViewportPlatformMonitor(g.MouseViewport);
-		WrapMousePosEx(axes_mask, ImRect(monitor->MainPos, monitor->MainPos + monitor->MainSize - ImVec2(1.0f, 1.0f)));
+        const int monitor_index = FindPlatformMonitorForPos(g.IO.MousePosPrev);
+        if (monitor_index == -1)
+            return;
+		const ImGuiPlatformMonitor& monitor = g.PlatformIO.Monitors[monitor_index];
+		WrapMousePosEx(axes_mask, ImRect(monitor.MainPos, monitor.MainPos + monitor.MainSize - ImVec2(1.0f, 1.0f)));
 	}
 	else
 #endif
