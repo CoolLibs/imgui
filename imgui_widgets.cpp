@@ -44,6 +44,7 @@ Index of this file:
 
 // System includes
 #include <stdint.h>     // intptr_t
+#include <cmath>
 
 //-------------------------------------------------------------------------
 // Warnings
@@ -2260,7 +2261,7 @@ TYPE ImGui::RoundScalarWithFormatT(const char* format, ImGuiDataType data_type, 
 
 // This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
 template<typename TYPE, typename SIGNEDTYPE, typename FLOATTYPE>
-bool ImGui::DragBehaviorT(ImGuiDataType data_type, TYPE* v, float v_speed, const TYPE v_min, const TYPE v_max, const char* format, ImGuiSliderFlags flags)
+bool ImGui::DragBehaviorT(ImGuiDataType data_type, TYPE* v, float v_speed, const TYPE v_min, const TYPE v_max, const char* format, ImGuiSliderFlags flags, bool invert_drag_direction)
 {
     ImGuiContext& g = *GImGui;
     const ImGuiAxis axis = (flags & ImGuiSliderFlags_Vertical) ? ImGuiAxis_Y : ImGuiAxis_X;
@@ -2295,6 +2296,8 @@ bool ImGui::DragBehaviorT(ImGuiDataType data_type, TYPE* v, float v_speed, const
 
     // For vertical drag we currently assume that Up=higher value (like we do with vertical sliders). This may become a parameter.
     if (axis == ImGuiAxis_Y)
+        adjust_delta = -adjust_delta;
+    if (invert_drag_direction)
         adjust_delta = -adjust_delta;
 
     // For logarithmic use our range is effectively 0..1 so scale the delta into that range
@@ -2378,6 +2381,86 @@ bool ImGui::DragBehaviorT(ImGuiDataType data_type, TYPE* v, float v_speed, const
     return true;
 }
 
+template<typename TYPE>
+static TYPE TYPE_MAX();
+template<>
+float TYPE_MAX(){ return FLT_MAX; }
+template<>
+double TYPE_MAX(){ return DBL_MAX; }
+template<typename TYPE>
+static TYPE sign(TYPE x)
+{
+    return x < 0 ? -1 : 1;
+}
+template<typename TYPE>
+static TYPE abs_log(TYPE x)
+{
+    if (x == 0)
+        return -TYPE_MAX<TYPE>();
+    return std::log(std::abs(x));
+};
+template<typename TYPE>
+static TYPE clamped_exp(TYPE x)
+{
+    const TYPE res = std::exp(x);
+    if (std::isinf(res))
+        return TYPE_MAX<TYPE>();
+    return res;
+};
+
+template<typename TYPE, typename SIGNEDTYPE, typename FLOATTYPE>
+static bool DragBehaviorT_CorrectLogarithmicBehaviour(ImGuiDataType data_type, TYPE* v, float v_speed, TYPE v_min, TYPE v_max, const char* format, ImGuiSliderFlags flags)
+{
+    const bool is_logarithmic = (flags & ImGuiSliderFlags_Logarithmic) != 0;
+    flags = flags & ~ImGuiSliderFlags_Logarithmic; // Remove logarithmic flag, we deal with it ourselves.
+
+    TYPE val = *v;
+    TYPE const val_sign = sign(val);
+    if (is_logarithmic)
+    {
+        if (std::abs(val) < 0.0001) // Avoids taking the log of 0
+            val = sign(val) * 0.0001;
+        val = std::log(std::abs(val));
+        // Adapt min and max bounds
+        if (val_sign > 0)
+        {
+            if (v_min < 0)
+                v_min = -TYPE_MAX<TYPE>();
+            else
+                v_min = abs_log(v_min);
+            if (v_max < 0)
+                v_max = -TYPE_MAX<TYPE>();
+            else
+                v_max = abs_log(v_max);
+        }
+        else
+        {
+            if (v_min < 0)
+                v_min = abs_log(-v_min);
+            else
+                v_min = -TYPE_MAX<TYPE>();
+            if (v_max < 0)
+                v_max = abs_log(-v_max);
+            else
+                v_max = -TYPE_MAX<TYPE>();
+        }
+    }
+
+    const bool has_changed = ImGui::DragBehaviorT<TYPE, SIGNEDTYPE, FLOATTYPE>(data_type, &val, v_speed, v_min, v_max, format, flags, /* invert_direction = */ val_sign < 0.f);
+
+    if (has_changed)
+    {
+        if (is_logarithmic)
+        {
+            val = clamped_exp(val) * val_sign;
+            if (std::abs(val) < 0.0001) // Allows transition between positive and negative numbers: avoids beeing stuck on zero and never getting past it while dragging.
+                val = -sign(val) * 0.0001;
+        }
+        *v = val;
+    }
+    return has_changed;
+}
+
 bool ImGui::DragBehavior(ImGuiID id, ImGuiDataType data_type, void* p_v, float v_speed, const void* p_min, const void* p_max, const char* format, ImGuiSliderFlags flags)
 {
     // Read imgui.cpp "API BREAKING CHANGES" section for 1.78 if you hit this assert.
@@ -2403,12 +2486,12 @@ bool ImGui::DragBehavior(ImGuiID id, ImGuiDataType data_type, void* p_v, float v
     case ImGuiDataType_U8:     { ImU32 v32 = (ImU32)*(ImU8*)p_v;  bool r = DragBehaviorT<ImU32, ImS32, float>(ImGuiDataType_U32, &v32, v_speed, p_min ? *(const ImU8*) p_min : IM_U8_MIN,  p_max ? *(const ImU8*)p_max  : IM_U8_MAX,  format, flags); if (r) *(ImU8*)p_v = (ImU8)v32; return r; }
     case ImGuiDataType_S16:    { ImS32 v32 = (ImS32)*(ImS16*)p_v; bool r = DragBehaviorT<ImS32, ImS32, float>(ImGuiDataType_S32, &v32, v_speed, p_min ? *(const ImS16*)p_min : IM_S16_MIN, p_max ? *(const ImS16*)p_max : IM_S16_MAX, format, flags); if (r) *(ImS16*)p_v = (ImS16)v32; return r; }
     case ImGuiDataType_U16:    { ImU32 v32 = (ImU32)*(ImU16*)p_v; bool r = DragBehaviorT<ImU32, ImS32, float>(ImGuiDataType_U32, &v32, v_speed, p_min ? *(const ImU16*)p_min : IM_U16_MIN, p_max ? *(const ImU16*)p_max : IM_U16_MAX, format, flags); if (r) *(ImU16*)p_v = (ImU16)v32; return r; }
-    case ImGuiDataType_S32:    return DragBehaviorT<ImS32, ImS32, float >(data_type, (ImS32*)p_v,  v_speed, p_min ? *(const ImS32* )p_min : IM_S32_MIN, p_max ? *(const ImS32* )p_max : IM_S32_MAX, format, flags);
-    case ImGuiDataType_U32:    return DragBehaviorT<ImU32, ImS32, float >(data_type, (ImU32*)p_v,  v_speed, p_min ? *(const ImU32* )p_min : IM_U32_MIN, p_max ? *(const ImU32* )p_max : IM_U32_MAX, format, flags);
-    case ImGuiDataType_S64:    return DragBehaviorT<ImS64, ImS64, double>(data_type, (ImS64*)p_v,  v_speed, p_min ? *(const ImS64* )p_min : IM_S64_MIN, p_max ? *(const ImS64* )p_max : IM_S64_MAX, format, flags);
-    case ImGuiDataType_U64:    return DragBehaviorT<ImU64, ImS64, double>(data_type, (ImU64*)p_v,  v_speed, p_min ? *(const ImU64* )p_min : IM_U64_MIN, p_max ? *(const ImU64* )p_max : IM_U64_MAX, format, flags);
-    case ImGuiDataType_Float:  return DragBehaviorT<float, float, float >(data_type, (float*)p_v,  v_speed, p_min ? *(const float* )p_min : -FLT_MAX,   p_max ? *(const float* )p_max : FLT_MAX,    format, flags);
-    case ImGuiDataType_Double: return DragBehaviorT<double,double,double>(data_type, (double*)p_v, v_speed, p_min ? *(const double*)p_min : -DBL_MAX,   p_max ? *(const double*)p_max : DBL_MAX,    format, flags);
+    case ImGuiDataType_S32:    return DragBehaviorT                            <ImS32, ImS32, float >(data_type, (ImS32*)p_v,  v_speed, p_min ? *(const ImS32* )p_min : IM_S32_MIN, p_max ? *(const ImS32* )p_max : IM_S32_MAX, format, flags);
+    case ImGuiDataType_U32:    return DragBehaviorT                            <ImU32, ImS32, float >(data_type, (ImU32*)p_v,  v_speed, p_min ? *(const ImU32* )p_min : IM_U32_MIN, p_max ? *(const ImU32* )p_max : IM_U32_MAX, format, flags);
+    case ImGuiDataType_S64:    return DragBehaviorT                            <ImS64, ImS64, double>(data_type, (ImS64*)p_v,  v_speed, p_min ? *(const ImS64* )p_min : IM_S64_MIN, p_max ? *(const ImS64* )p_max : IM_S64_MAX, format, flags);
+    case ImGuiDataType_U64:    return DragBehaviorT                            <ImU64, ImS64, double>(data_type, (ImU64*)p_v,  v_speed, p_min ? *(const ImU64* )p_min : IM_U64_MIN, p_max ? *(const ImU64* )p_max : IM_U64_MAX, format, flags);
+    case ImGuiDataType_Float:  return DragBehaviorT_CorrectLogarithmicBehaviour<float, float, float >(data_type, (float*)p_v,  v_speed, p_min ? *(const float* )p_min : -FLT_MAX,   p_max ? *(const float* )p_max : FLT_MAX,    format, flags);
+    case ImGuiDataType_Double: return DragBehaviorT_CorrectLogarithmicBehaviour<double,double,double>(data_type, (double*)p_v, v_speed, p_min ? *(const double*)p_min : -DBL_MAX,   p_max ? *(const double*)p_max : DBL_MAX,    format, flags);
     case ImGuiDataType_COUNT:  break;
     }
     IM_ASSERT(0);
