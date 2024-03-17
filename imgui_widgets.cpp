@@ -45,6 +45,7 @@ Index of this file:
 // System includes
 #include <stdint.h>     // intptr_t
 #include <cmath>
+#include <utility>
 
 //-------------------------------------------------------------------------
 // Warnings
@@ -2395,9 +2396,10 @@ static TYPE sign(TYPE x)
 template<typename TYPE>
 static TYPE abs_log(TYPE x)
 {
-    if (x == 0)
+    const TYPE res = std::log(std::abs(x));
+    if (std::isinf(res) || std::isnan(res))
         return -TYPE_MAX<TYPE>();
-    return std::log(std::abs(x));
+    return res;
 };
 template<typename TYPE>
 static TYPE clamped_exp(TYPE x)
@@ -2415,13 +2417,18 @@ static bool DragBehaviorT_CorrectLogarithmicBehaviour(ImGuiDataType data_type, T
     flags = flags & ~ImGuiSliderFlags_Logarithmic; // Remove logarithmic flag, we deal with it ourselves.
 
     TYPE val = *v;
-    TYPE const val_sign = sign(val);
+    TYPE val_sign;
     if (is_logarithmic)
     {
+        if (val < v_min)
+            val = v_min;
+        if (val > v_max)
+            val = v_max;
+        val_sign = sign(val);
         if (std::abs(val) < 0.0001) // Avoids taking the log of 0
             val = sign(val) * 0.0001;
         val = std::log(std::abs(val));
-        // Adapt min and max bounds
+        // Adapt min and max bounds TODO a bit broken, need to handle FLT_MAX, and when the bounds don't have the same sign as the value, and when bounds == 0
         if (val_sign > 0)
         {
             if (v_min < 0)
@@ -2429,12 +2436,13 @@ static bool DragBehaviorT_CorrectLogarithmicBehaviour(ImGuiDataType data_type, T
             else
                 v_min = abs_log(v_min);
             if (v_max < 0)
-                v_max = -TYPE_MAX<TYPE>();
+                v_max = -TYPE_MAX<TYPE>() + 1.f;
             else
                 v_max = abs_log(v_max);
         }
         else
         {
+            std::swap(v_min, v_max);
             if (v_min < 0)
                 v_min = abs_log(-v_min);
             else
@@ -2442,7 +2450,7 @@ static bool DragBehaviorT_CorrectLogarithmicBehaviour(ImGuiDataType data_type, T
             if (v_max < 0)
                 v_max = abs_log(-v_max);
             else
-                v_max = -TYPE_MAX<TYPE>();
+                v_max = TYPE_MAX<TYPE>();
         }
     }
 
