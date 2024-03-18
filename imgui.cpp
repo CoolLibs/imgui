@@ -9714,6 +9714,23 @@ void ImGui::WrapMousePos(ImGuiAxesMask axes_mask)
 	}
 }
 
+void ImGui::LockMousePos(ImGuiAxesMask axes_mask)
+{
+    static ImVec2 mouse_pos_when_activated{}; // It's ok to use a static variable here, because only one widget will ever be active at the same time.
+    if (IsItemActivated())
+        mouse_pos_when_activated = GetMousePos();
+    if (IsItemActive())
+    {
+        SetMouseCursor(ImGuiMouseCursor_None);
+        WrapMousePos(axes_mask);
+    }
+    if (IsItemDeactivated())
+    {
+        GetIO().MousePos        = mouse_pos_when_activated;
+        GetIO().WantSetMousePos = true;
+    }
+}
+
 #ifndef IMGUI_DISABLE_DEBUG_TOOLS
 static const char* GetInputSourceName(ImGuiInputSource source)
 {
