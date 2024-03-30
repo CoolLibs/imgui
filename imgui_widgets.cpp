@@ -2453,7 +2453,7 @@ static bool DragBehaviorT_CorrectLogarithmicBehaviour(ImGuiDataType data_type, T
         }
     }
 
-    const bool has_changed = ImGui::DragBehaviorT<TYPE, SIGNEDTYPE, FLOATTYPE>(data_type, &val, v_speed, v_min, v_max, format, flags, /* invert_direction = */ val_sign < 0.f);
+    const bool has_changed = ImGui::DragBehaviorT<TYPE, SIGNEDTYPE, FLOATTYPE>(data_type, &val, v_speed, v_min, v_max, format, flags, /* invert_direction = */ is_logarithmic && val_sign < 0.f);
 
     if (has_changed)
     {
