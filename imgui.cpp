@@ -9714,6 +9714,72 @@ void ImGui::WrapMousePos(ImGuiAxesMask axes_mask)
 	}
 }
 
+void ImGui::SetWindowFullscreen()
+{
+	ImGuiContext& g = *GImGui;
+#ifdef IMGUI_HAS_DOCK
+	if (g.IO.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
+		const ImGuiPlatformMonitor& monitor = g.PlatformIO.Monitors[ImGui::GetCurrentWindow()->Viewport->PlatformMonitor];
+        ImGui::SetWindowSize(monitor.MainSize + ImVec2{2.f , 2.f}); // Make the window slightly bigger than the screen
+        ImGui::SetWindowPos(monitor.MainPos - ImVec2{1.f , 1.f});   // because when it has the exact size of the screen it turns into actual fullscreen mode, which causes tearing
+	}
+	else
+#endif
+	{
+		ImGuiViewport* viewport = GetMainViewport();
+        ImGui::SetWindowSize(viewport->Size);
+        ImGui::SetWindowPos(viewport->Pos);
+	}
+}
+
+void ImGui::ExitWindowFullscreen()
+{
+	ImGuiContext& g = *GImGui;
+#ifdef IMGUI_HAS_DOCK
+	if (g.IO.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
+		const ImGuiPlatformMonitor& monitor = g.PlatformIO.Monitors[ImGui::GetCurrentWindow()->Viewport->PlatformMonitor];
+        ImGui::SetWindowSize(monitor.MainSize * 0.9f);
+	}
+	else
+#endif
+	{
+		ImGuiViewport* viewport = GetMainViewport();
+        ImGui::SetWindowSize(viewport->Size * 0.9f);
+	}
+}
+
+void ImGui::ToggleWindowFullscreen()
+{
+	ImGuiContext& g = *GImGui;
+#ifdef IMGUI_HAS_DOCK
+	if (g.IO.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
+		const ImGuiPlatformMonitor& monitor = g.PlatformIO.Monitors[ImGui::GetCurrentWindow()->Viewport->PlatformMonitor];
+
+        if (ImGui::GetWindowSize() != monitor.MainSize + ImVec2{2.f , 2.f} || ImGui::GetWindowPos() != monitor.MainPos - ImVec2{1.f , 1.f}) {
+            ImGui::SetWindowSize(monitor.MainSize + ImVec2{2.f , 2.f}); // Make the window slightly bigger than the screen
+            ImGui::SetWindowPos(monitor.MainPos - ImVec2{1.f , 1.f});   // because when it has the exact size of the screen it turns into actual fullscreen mode, which causes tearing
+        }
+        else {
+            ImGui::SetWindowSize(monitor.MainSize * 0.9f);
+        }
+	}
+	else
+#endif
+	{
+		ImGuiViewport* viewport = GetMainViewport();
+        if (ImGui::GetWindowSize() != viewport->Size || ImGui::GetWindowPos() != viewport->Pos) {
+            ImGui::SetWindowSize(viewport->Size);
+            ImGui::SetWindowPos(viewport->Pos);
+        }
+        else {
+            ImGui::SetWindowSize(viewport->Size * 0.9f);
+        }
+	}
+}
+
 void ImGui::LockMousePos(ImGuiAxesMask axes_mask)
 {
     static ImVec2 mouse_pos_when_activated{}; // It's ok to use a static variable here, because only one widget will ever be active at the same time.
