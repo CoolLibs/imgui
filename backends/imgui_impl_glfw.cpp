@@ -674,11 +674,13 @@ bool ImGui_ImplGlfw_InitForOther(GLFWwindow* window, bool install_callbacks)
 
 void ImGui_ImplGlfw_Shutdown()
 {
+    ImGui_ImplGlfw_ShutdownPlatformInterface();
     ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
-    IM_ASSERT(bd != nullptr && "No platform backend to shutdown, or already shutdown?");
+    //IM_ASSERT(bd != nullptr && "No platform backend to shutdown, or already shutdown?");
+    if(!bd)
+        return;
     ImGuiIO& io = ImGui::GetIO();
 
-    ImGui_ImplGlfw_ShutdownPlatformInterface();
 
     if (bd->InstalledCallbacks)
         ImGui_ImplGlfw_RestoreCallbacks(bd->Window);
