@@ -888,10 +888,9 @@ static void ImGui_ImplGlfw_UpdateMonitors()
 #endif
 #if GLFW_HAS_PER_MONITOR_DPI
         // Warning: the validity of monitor DPI information on Windows depends on the application DPI awareness settings, which generally needs to be set in the manifest or at runtime.
-        // COOLLAB: disabled because we already handle screen DPI scale on our side
-        // float x_scale, y_scale;
-        // glfwGetMonitorContentScale(glfw_monitors[n], &x_scale, &y_scale);
-        // monitor.DpiScale = x_scale;
+        float x_scale, y_scale;
+        glfwGetMonitorContentScale(glfw_monitors[n], &x_scale, &y_scale);
+        monitor.DpiScale = x_scale;
 #endif
         monitor.PlatformHandle = (void*)glfw_monitors[n]; // [...] GLFW doc states: "guaranteed to be valid only until the monitor configuration changes"
         platform_io.Monitors.push_back(monitor);
