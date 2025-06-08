@@ -907,16 +907,19 @@ bool ImGui::CloseButton(ImGuiID id, const ImVec2& pos, float height, bool tweak_
     bool pressed = ButtonBehavior(bb_interact, id, &hovered, &held);
     if (is_clipped)
         return pressed;
-
+    
     // Render
+    if (tweak_for_tab_bar)
+        window->DrawList->AddLine(bb_interact.Min - ImVec2{0.f, 1.f}, {bb_interact.Min.x, bb_interact.Max.y - 1.0f}, GetColorU32(ImGuiCol_Separator));
+    
     ImU32 bg_col = GetColorU32(held ? ImGuiCol_ButtonActive : ImGuiCol_ButtonHovered);
     if (hovered)
         window->DrawList->AddRectFilled(bb.Min, bb.Max, bg_col);
     RenderNavCursor(bb, id, ImGuiNavRenderCursorFlags_Compact);
     const ImU32 cross_col = GetColorU32(ImGuiCol_Text);
     const ImVec2 cross_center = bb.GetCenter() - ImVec2(0.5f, 0.5f);
-    const float cross_extent = g.FontSize * 0.5f * 0.7071f - 1.0f;
-    const float cross_thickness = 1.0f; // FIXME-DPI
+    const float cross_extent = g.FontSize * 0.46f * 0.7071f - 1.0f;
+    const float cross_thickness = 0.15f * g.FontSize;
     window->DrawList->AddLine(cross_center + ImVec2(+cross_extent, +cross_extent), cross_center + ImVec2(-cross_extent, -cross_extent), cross_col, cross_thickness);
     window->DrawList->AddLine(cross_center + ImVec2(+cross_extent, -cross_extent), cross_center + ImVec2(-cross_extent, +cross_extent), cross_col, cross_thickness);
 
@@ -10752,8 +10755,8 @@ void ImGui::TabItemLabelAndCloseButton(ImDrawList* draw_list, const ImRect& bb, 
         //draw_list->AddCircle(text_ellipsis_clip_bb.Min, 3.0f, *out_text_clipped ? IM_COL32(255, 0, 0, 255) : IM_COL32(0, 255, 0, 255));
     }
 
-    const float button_sz = g.FontSize;
-    const ImVec2 button_pos(ImMax(bb.Min.x, bb.Max.x - frame_padding.x - button_sz), bb.Min.y + frame_padding.y);
+    const float button_sz = bb.GetHeight(); //g.FontSize;
+    const ImVec2 button_pos(ImMax(bb.Min.x, bb.Max.x - button_sz), bb.Min.y);
 
     // Close Button & Unsaved Marker
     // We are relying on a subtle and confusing distinction between 'hovered' and 'g.HoveredId' which happens because we are using ImGuiButtonFlags_AllowOverlapMode + SetItemAllowOverlap()
@@ -10782,7 +10785,7 @@ void ImGui::TabItemLabelAndCloseButton(ImDrawList* draw_list, const ImRect& bb, 
     else if (close_button_visible)
     {
         ImGuiLastItemData last_item_backup = g.LastItemData;
-        if (CloseButton(close_button_id, button_pos))
+        if (CloseButton(close_button_id, button_pos, button_sz))
             close_button_pressed = true;
         g.LastItemData = last_item_backup;
 
