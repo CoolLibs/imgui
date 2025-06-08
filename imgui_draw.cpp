@@ -4428,10 +4428,11 @@ void ImGui::RenderArrowPointingAt(ImDrawList* draw_list, ImVec2 pos, ImVec2 half
 
 // This is less wide than RenderArrow() and we use in dock nodes instead of the regular RenderArrow() to denote a change of functionality,
 // and because the saved space means that the left-most tab label can stay at exactly the same position as the label of a loose window.
-void ImGui::RenderArrowDockMenu(ImDrawList* draw_list, ImVec2 p_min, float sz, ImU32 col)
+void ImGui::RenderArrowDockMenu(ImDrawList* draw_list, ImVec2 p_center, float sz, ImU32 col)
 {
-    draw_list->AddRectFilled(p_min + ImVec2(sz * 0.20f, sz * 0.15f), p_min + ImVec2(sz * 0.80f, sz * 0.30f), col);
-    RenderArrowPointingAt(draw_list, p_min + ImVec2(sz * 0.50f, sz * 0.85f), ImVec2(sz * 0.30f, sz * 0.40f), ImGuiDir_Down, col);
+    float const yoff = 0.18f * sz; 
+    draw_list->AddRectFilled(p_center + ImVec2(-sz * 0.30f, - sz * 0.15f - yoff), p_center + ImVec2(sz * 0.30f, 0.f - yoff), col);
+    RenderArrowPointingAt(draw_list, p_center + ImVec2(0.f, sz * 0.55f - yoff), ImVec2(sz * 0.30f, sz * 0.40f), ImGuiDir_Down, col);
 }
 
 static inline float ImAcos01(float x)
