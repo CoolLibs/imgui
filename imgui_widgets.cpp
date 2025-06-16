@@ -885,8 +885,12 @@ bool ImGui::ArrowButton(const char* str_id, ImGuiDir dir)
 }
 
 // Button to close a window
-bool ImGui::CloseButton(ImGuiID id, const ImVec2& pos, float height, bool tweak_for_tab_bar)
+bool ImGui::CloseButton(ImGuiID id, ImVec2 pos, float height, bool tweak_for_tab_bar)
 {
+    float prop = 0.73f; // Proportion of the title bar taken by the close button
+    pos = pos + ImVec2{height*(1.f-prop)/2.f, height*(1.f-prop)/2.f};
+    height = height * prop;
+
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
 
@@ -914,12 +918,12 @@ bool ImGui::CloseButton(ImGuiID id, const ImVec2& pos, float height, bool tweak_
     
     ImU32 bg_col = GetColorU32(held ? ImGuiCol_ButtonActive : ImGuiCol_ButtonHovered);
     if (hovered)
-        window->DrawList->AddRectFilled(bb.Min, bb.Max, bg_col);
+        window->DrawList->AddRectFilled(bb.Min, bb.Max, bg_col, 5.f);
     RenderNavCursor(bb, id, ImGuiNavRenderCursorFlags_Compact);
     const ImU32 cross_col = GetColorU32(ImGuiCol_Text);
     const ImVec2 cross_center = bb.GetCenter() - ImVec2(0.5f, 0.5f);
-    const float cross_extent = g.FontSize * 0.46f * 0.7071f - 1.0f;
-    const float cross_thickness = 0.15f * g.FontSize;
+    const float cross_extent = height * 0.26f / prop * 0.7071f - 1.0f;
+    const float cross_thickness = 0.13f * g.FontSize;
     window->DrawList->AddLine(cross_center + ImVec2(+cross_extent, +cross_extent), cross_center + ImVec2(-cross_extent, -cross_extent), cross_col, cross_thickness);
     window->DrawList->AddLine(cross_center + ImVec2(+cross_extent, -cross_extent), cross_center + ImVec2(-cross_extent, +cross_extent), cross_col, cross_thickness);
 
