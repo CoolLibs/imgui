@@ -7318,24 +7318,24 @@ void ImGui::RenderWindowTitleBarContents(ImGuiWindow* window, const ImRect& titl
 
     // Layout buttons
     // FIXME: Would be nice to generalize the subtleties expressed here into reusable code.
-    float pad_l = style.FramePadding.x;
+    float pad_l = 0.f; //style.FramePadding.x;
     float pad_r = 0.f; //style.FramePadding.x;
-    float button_sz = title_bar_rect.GetHeight(); //g.FontSize;
+    float button_sz = CloseButtonSize();
     ImVec2 close_button_pos;
     ImVec2 collapse_button_pos;
     if (has_close_button)
     {
-        close_button_pos = ImVec2(title_bar_rect.Max.x - pad_r - button_sz, title_bar_rect.Min.y);
+        close_button_pos = ImVec2(title_bar_rect.Max.x - pad_r - button_sz - (title_bar_rect.GetHeight() - button_sz) * 0.5f, title_bar_rect.GetCenter().y - button_sz * 0.5f);
         pad_r += button_sz + style.ItemInnerSpacing.x;
     }
     if (has_collapse_button && style.WindowMenuButtonPosition == ImGuiDir_Right)
     {
-        collapse_button_pos = ImVec2(title_bar_rect.Max.x - pad_r - button_sz, title_bar_rect.Min.y);
+        collapse_button_pos = ImVec2(title_bar_rect.Max.x - pad_r - button_sz - (title_bar_rect.GetHeight() - button_sz) * 0.5f, title_bar_rect.GetCenter().y - button_sz * 0.5f);
         pad_r += button_sz + style.ItemInnerSpacing.x;
     }
     if (has_collapse_button && style.WindowMenuButtonPosition == ImGuiDir_Left)
     {
-        collapse_button_pos = ImVec2(title_bar_rect.Min.x + pad_l, title_bar_rect.Min.y);
+        collapse_button_pos = ImVec2(title_bar_rect.Min.x + pad_l + (title_bar_rect.GetHeight() - button_sz) * 0.5f, title_bar_rect.GetCenter().y - button_sz * 0.5f);
         pad_l += button_sz + style.ItemInnerSpacing.x;
     }
 
@@ -7346,7 +7346,7 @@ void ImGui::RenderWindowTitleBarContents(ImGuiWindow* window, const ImRect& titl
 
     // Close button
     if (has_close_button)
-        if (CloseButton(window->GetID("#CLOSE"), close_button_pos, button_sz))
+        if (CloseButton(window->GetID("#CLOSE"), close_button_pos))
             *p_open = false;
 
     window->DC.NavLayerCurrent = ImGuiNavLayer_Main;
@@ -19640,7 +19640,7 @@ static void ImGui::DockNodeUpdateTabBar(ImGuiDockNode* node, ImGuiWindow* host_w
             PushItemFlag(ImGuiItemFlags_Disabled, true);
             PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_Text] * ImVec4(1.0f,1.0f,1.0f,0.4f));
         }
-        if (CloseButton(host_window->GetID("#CLOSE"), close_button_pos, title_bar_rect.GetHeight(), true))
+        if (CloseButton(host_window->GetID("#CLOSE"), close_button_pos))
         {
             node->WantCloseAll = true;
             for (int n = 0; n < tab_bar->Tabs.Size; n++)

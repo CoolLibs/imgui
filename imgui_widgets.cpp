@@ -884,20 +884,22 @@ bool ImGui::ArrowButton(const char* str_id, ImGuiDir dir)
     return ArrowButtonEx(str_id, dir, ImVec2(sz, sz), ImGuiButtonFlags_None);
 }
 
-// Button to close a window
-bool ImGui::CloseButton(ImGuiID id, ImVec2 pos, float height, bool tweak_for_tab_bar)
+float ImGui::CloseButtonSize()
 {
-    float prop = 0.73f; // Proportion of the title bar taken by the close button
-    pos = pos + ImVec2{height*(1.f-prop)/2.f, height*(1.f-prop)/2.f};
-    height = height * prop;
+    return GImGui->FontSize;
+}
 
+// Button to close a window
+bool ImGui::CloseButton(ImGuiID id, ImVec2 pos)
+{
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
 
+    const float button_size = CloseButtonSize();
+
     // Tweak 1: Shrink hit-testing area if button covers an abnormally large proportion of the visible region. That's in order to facilitate moving the window away. (#3825)
     // This may better be applied as a general hit-rect reduction mechanism for all widgets to ensure the area to move window is always accessible?
-    height = height != -1.f ? height : g.FontSize;
-    const ImRect bb(pos, pos + ImVec2(height /* g.FontSize */, height/* g.FontSize */));
+    const ImRect bb(pos, pos + ImVec2(button_size, button_size));
     ImRect bb_interact = bb;
     const float area_to_visible_ratio = window->OuterRectClipped.GetArea() / bb.GetArea();
     if (area_to_visible_ratio < 1.5f)
@@ -911,18 +913,15 @@ bool ImGui::CloseButton(ImGuiID id, ImVec2 pos, float height, bool tweak_for_tab
     bool pressed = ButtonBehavior(bb_interact, id, &hovered, &held);
     if (is_clipped)
         return pressed;
-    
+
     // Render
-    if (tweak_for_tab_bar)
-        window->DrawList->AddLine(bb_interact.Min - ImVec2{0.f, 1.f}, {bb_interact.Min.x, bb_interact.Max.y - 1.0f}, GetColorU32(ImGuiCol_Separator));
-    
     ImU32 bg_col = GetColorU32(held ? ImGuiCol_ButtonActive : ImGuiCol_ButtonHovered);
     if (hovered)
         window->DrawList->AddRectFilled(bb.Min, bb.Max, bg_col, 5.f);
     RenderNavCursor(bb, id, ImGuiNavRenderCursorFlags_Compact);
     const ImU32 cross_col = GetColorU32(ImGuiCol_Text);
     const ImVec2 cross_center = bb.GetCenter() - ImVec2(0.5f, 0.5f);
-    const float cross_extent = height * 0.26f / prop * 0.7071f - 1.0f;
+    const float cross_extent = button_size * 0.725f * 0.5f * 0.7071f - 1.0f;
     const float cross_thickness = 0.13f * g.FontSize;
     window->DrawList->AddLine(cross_center + ImVec2(+cross_extent, +cross_extent), cross_center + ImVec2(-cross_extent, -cross_extent), cross_col, cross_thickness);
     window->DrawList->AddLine(cross_center + ImVec2(+cross_extent, -cross_extent), cross_center + ImVec2(-cross_extent, +cross_extent), cross_col, cross_thickness);
@@ -7198,7 +7197,7 @@ bool ImGui::CollapsingHeader(const char* label, bool* p_visible, ImGuiTreeNodeFl
         // FIXME: CloseButton can overlap into text, need find a way to clip the text somehow.
         ImGuiContext& g = *GImGui;
         ImGuiLastItemData last_item_backup = g.LastItemData;
-        float button_size = g.FontSize;
+        float button_size = CloseButtonSize();
         float button_x = ImMax(g.LastItemData.Rect.Min.x, g.LastItemData.Rect.Max.x - g.Style.FramePadding.x - button_size);
         float button_y = g.LastItemData.Rect.Min.y + g.Style.FramePadding.y;
         ImGuiID close_button_id = GetIDWithSeed("#CLOSE", NULL, id);
@@ -10759,8 +10758,8 @@ void ImGui::TabItemLabelAndCloseButton(ImDrawList* draw_list, const ImRect& bb, 
         //draw_list->AddCircle(text_ellipsis_clip_bb.Min, 3.0f, *out_text_clipped ? IM_COL32(255, 0, 0, 255) : IM_COL32(0, 255, 0, 255));
     }
 
-    const float button_sz = bb.GetHeight(); //g.FontSize;
-    const ImVec2 button_pos(ImMax(bb.Min.x, bb.Max.x - button_sz), bb.Min.y);
+    const float button_sz = CloseButtonSize();
+    const ImVec2 button_pos(ImMax(bb.Min.x, bb.Max.x - button_sz - (bb.GetHeight() - button_sz) * 0.5f), bb.GetCenter().y - button_sz * 0.5f);
 
     // Close Button & Unsaved Marker
     // We are relying on a subtle and confusing distinction between 'hovered' and 'g.HoveredId' which happens because we are using ImGuiButtonFlags_AllowOverlapMode + SetItemAllowOverlap()
@@ -10789,7 +10788,7 @@ void ImGui::TabItemLabelAndCloseButton(ImDrawList* draw_list, const ImRect& bb, 
     else if (close_button_visible)
     {
         ImGuiLastItemData last_item_backup = g.LastItemData;
-        if (CloseButton(close_button_id, button_pos, button_sz))
+        if (CloseButton(close_button_id, button_pos))
             close_button_pressed = true;
         g.LastItemData = last_item_backup;
 
