@@ -7318,7 +7318,7 @@ void ImGui::RenderWindowTitleBarContents(ImGuiWindow* window, const ImRect& titl
 
     // Layout buttons
     // FIXME: Would be nice to generalize the subtleties expressed here into reusable code.
-    float pad_l = 0.f; //style.FramePadding.x;
+    float pad_l = style.FramePadding.x;
     float pad_r = 0.f; //style.FramePadding.x;
     float button_sz = CloseButtonSize();
     ImVec2 close_button_pos;
