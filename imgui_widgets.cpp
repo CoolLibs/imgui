@@ -5728,7 +5728,10 @@ bool ImGui::ColorEdit4(const char* label, float col[4], ImGuiColorEditFlags flag
         ColorConvertRGBtoHSV(f[0], f[1], f[2], f[0], f[1], f[2]);
         ColorEditRestoreHS(col, &f[0], &f[1], &f[2]);
     }
-    int i[4] = { IM_F32_TO_INT8_UNBOUND(f[0]), IM_F32_TO_INT8_UNBOUND(f[1]), IM_F32_TO_INT8_UNBOUND(f[2]), IM_F32_TO_INT8_UNBOUND(f[3]) };
+    const std::array<int, 4> imax = (flags & ImGuiColorEditFlags_DisplayHSV) 
+                                      ? std::array<int, 4>{360, 100, 100, 100}
+                                      : std::array<int, 4>{255, 255, 255, 100};
+    int i[4] = { IM_F32_TO_INT_UNBOUND(f[0], imax[0]), IM_F32_TO_INT_UNBOUND(f[1], imax[1]), IM_F32_TO_INT_UNBOUND(f[2], imax[2]), IM_F32_TO_INT_UNBOUND(f[3], imax[3])};
 
     bool value_changed = false;
     bool value_changed_as_float = false;
@@ -5775,7 +5778,7 @@ bool ImGui::ColorEdit4(const char* label, float col[4], ImGuiColorEditFlags flag
             }
             else
             {
-                value_changed |= DragInt(ids[n], &i[n], 1.0f, 0, hdr ? 0 : 255, fmt_table_int[fmt_idx][n]);
+                value_changed |= DragInt(ids[n], &i[n], 1.0f, 0, hdr ? 0 : imax[n], fmt_table_int[fmt_idx][n]);
             }
             if (!(flags & ImGuiColorEditFlags_NoOptions))
                 OpenPopupOnItemClick("context", ImGuiPopupFlags_MouseButtonRight);
@@ -5786,9 +5789,9 @@ bool ImGui::ColorEdit4(const char* label, float col[4], ImGuiColorEditFlags flag
         // RGB Hexadecimal Input
         char buf[64];
         if (alpha)
-            ImFormatString(buf, IM_ARRAYSIZE(buf), "#%02X%02X%02X%02X", ImClamp(i[0], 0, 255), ImClamp(i[1], 0, 255), ImClamp(i[2], 0, 255), ImClamp(i[3], 0, 255));
+            ImFormatString(buf, IM_ARRAYSIZE(buf), "#%02X%02X%02X%02X", ImClamp(i[0], 0, imax[0]), ImClamp(i[1], 0, imax[1]), ImClamp(i[2], 0, imax[2]), ImClamp(i[3], 0, imax[3]));
         else
-            ImFormatString(buf, IM_ARRAYSIZE(buf), "#%02X%02X%02X", ImClamp(i[0], 0, 255), ImClamp(i[1], 0, 255), ImClamp(i[2], 0, 255));
+            ImFormatString(buf, IM_ARRAYSIZE(buf), "#%02X%02X%02X", ImClamp(i[0], 0, imax[0]), ImClamp(i[1], 0, imax[1]), ImClamp(i[2], 0, imax[2]));
         SetNextItemWidth(w_inputs);
         if (InputText("##Text", buf, IM_ARRAYSIZE(buf), ImGuiInputTextFlags_CharsUppercase))
         {
@@ -5797,7 +5800,7 @@ bool ImGui::ColorEdit4(const char* label, float col[4], ImGuiColorEditFlags flag
             while (*p == '#' || ImCharIsBlankA(*p))
                 p++;
             i[0] = i[1] = i[2] = 0;
-            i[3] = 0xFF; // alpha default to 255 is not parsed by scanf (e.g. inputting #FFFFFF omitting alpha)
+            i[3] = imax[3]; // alpha default to 100 is not parsed by scanf (e.g. inputting #FFFFFF omitting alpha)
             int r;
             if (alpha)
                 r = sscanf(p, "%02X%02X%02X%02X", (unsigned int*)&i[0], (unsigned int*)&i[1], (unsigned int*)&i[2], (unsigned int*)&i[3]); // Treat at unsigned (%X is unsigned)
@@ -5862,7 +5865,7 @@ bool ImGui::ColorEdit4(const char* label, float col[4], ImGuiColorEditFlags flag
     {
         if (!value_changed_as_float)
             for (int n = 0; n < 4; n++)
-                f[n] = i[n] / 255.0f;
+                f[n] = i[n] / static_cast<float>(imax[n]);
         if ((flags & ImGuiColorEditFlags_DisplayHSV) && (flags & ImGuiColorEditFlags_InputRGB))
         {
             g.ColorEditSavedHue = f[0];
